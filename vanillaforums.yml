@@ -1,0 +1,44 @@
+   - hosts: all
+     user: vagrant
+
+     # You must download de vainilla pack from oficial site.
+     # http://vanillaforums.org/download
+
+     tasks:
+       - name: vanilla requirements
+         sudo: true
+         apt: state=present name={{ item }} update_cache=true
+         with_items:
+           - php5
+           - php5-mysql
+           - php5-gd
+           - curl
+           - mysql-server
+           - mysql-client
+           - apache2
+           - git
+           - python-mysqldb # for ansible
+       - name: apache start
+         service: name=apache2 state=started enabled=yes
+
+  # Deploy vanilla
+  
+       - name: download package
+         sudo: true
+         git: repo=https://github.com/vanilla/vanilla.git dest=/var/www/html/vanilla update=no
+
+  # Correct permissions for vanilla
+  
+       - name: permissions for vanilla
+         sudo: true
+         file:  path=/var/www/html/vanilla/{{ item }} state=directory recurse=yes mode=777
+         with_items:
+           - conf
+           - uploads
+           - cache
+
+       - name: Create Database
+         mysql_db: name=vanilla state=present
+
+       - name: Create mysql user for vanilla
+         mysql_user: name=vanilla password=vanilla priv=vanilla.*:ALL state=present
